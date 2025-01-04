@@ -36,7 +36,7 @@
   <script>
     // MQTT broker details
     const broker = "wss://broker.emqx.io:8084/mqtt"; // WebSocket connection to EMQX
-    const topic = "led/control"; // Topic to publish LED control messages
+    const topic = "anami/bme280/alarm"; // Topic to publish LED control messages
 
     // Create MQTT client
     const client = mqtt.connect(broker);
