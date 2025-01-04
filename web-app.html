@@ -101,7 +101,6 @@
       if (topic === topicPressure) pressureEl.textContent = msg;
       if (topic === topicHumidity) humidityEl.textContent = msg;
       if (topic === topicStatus) alarmStateEl.textContent = msg;
-      if (topic === topicAlarm) alarmStateEl.textContent = msg === "ON" ? "Active" : "Inactive";
     });
 
     btnOff.addEventListener("click", () => {
