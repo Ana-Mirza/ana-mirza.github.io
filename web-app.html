@@ -3,74 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MQTT LED Controller</title>
+  <title>MQTT Sensor Monitor</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
       text-align: center;
-      margin-top: 50px;
+      margin-top: 20px;
+    }
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      margin: 10px 0;
+    }
+    p {
+      margin: 10px 0;
+    }
+    .status {
+      font-weight: bold;
+      font-size: 1.2em;
     }
     button {
       padding: 10px 20px;
       font-size: 16px;
-      margin: 10px;
+      margin: 20px;
       cursor: pointer;
-    }
-    .on {
-      background-color: green;
-      color: white;
     }
     .off {
       background-color: red;
       color: white;
     }
+    footer {
+      position: sticky;
+      bottom: 0;
+      background-color: #f8f8f8;
+      padding: 20px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>MQTT LED Controller</h1>
-  <p>Status: <span id="status">Disconnected</span></p>
-  <button id="btnOn" class="on">Turn LED ON</button>
-  <button id="btnOff" class="off">Turn LED OFF</button>
+  <header>
+    <h1>MQTT Sensor Monitor</h1>
+    <p>Status: <span id="status">Disconnected</span></p>
+  </header>
+  
+  <div id="content">
+    <h2>Sensor Data</h2>
+    <p>Temperature: <span id="temp">--</span> °C</p>
+    <p>Pressure: <span id="pressure">--</span> hPa</p>
+    <p>Humidity: <span id="humidity">--</span> %</p>
+  </div>
+  
+  <footer>
+    <p>Alarm Status: <span id="alarmState" class="status">Unknown</span></p>
+    <button id="btnOff" class="off">Turn Alarm OFF</button>
+  </footer>
 
   <script>
-    // MQTT broker details
     const broker = "wss://broker.emqx.io:8084/mqtt"; // WebSocket connection to EMQX
-    const topic = "anami/bme280/alarm"; // Topic to publish LED control messages
+    const topicAlarm = "anami/bme280/alarm";
+    const topicTemp = "anami/bme280/temperature";
+    const topicPressure = "anami/bme280/pressure";
+    const topicHumidity = "anami/bme280/humidity";
+    const topicStatus = "anami/bme280/alarm/status";
 
-    // Create MQTT client
     const client = mqtt.connect(broker);
 
-    // HTML elements
     const statusEl = document.getElementById("status");
-    const btnOn = document.getElementById("btnOn");
+    const alarmStateEl = document.getElementById("alarmState");
+    const tempEl = document.getElementById("temp");
+    const pressureEl = document.getElementById("pressure");
+    const humidityEl = document.getElementById("humidity");
     const btnOff = document.getElementById("btnOff");
 
-    // Update connection status
     client.on("connect", () => {
-      console.log("Connected to MQTT broker");
       statusEl.textContent = "Connected";
       statusEl.style.color = "green";
+      client.subscribe([topicAlarm, topicTemp, topicPressure, topicHumidity, topicStatus]);
     });
 
-    client.on("disconnect", () => {
-      console.log("Disconnected from MQTT broker");
-      statusEl.textContent = "Disconnected";
-      statusEl.style.color = "red";
-    });
-
-    // Publish messages when buttons are clicked
-    btnOn.addEventListener("click", () => {
-      client.publish(topic, "ON");
-      console.log("Published: ON");
+    client.on("message", (topic, message) => {
+      const msg = message.toString();
+      if (topic === topicTemp) tempEl.textContent = msg;
+      if (topic === topicPressure) pressureEl.textContent = msg;
+      if (topic === topicHumidity) humidityEl.textContent = msg;
+      if (topic === topicStatus) alarmStateEl.textContent = msg;
+      if (topic === topicAlarm) alarmStateEl.textContent = msg === "ON" ? "Active" : "Inactive";
     });
 
     btnOff.addEventListener("click", () => {
-      client.publish(topic, "OFF");
-      console.log("Published: OFF");
+      client.publish(topicAlarm, "OFF");
     });
 
-    // Handle errors
     client.on("error", (err) => {
       console.error("Connection error: ", err);
       statusEl.textContent = "Error";
