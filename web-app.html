@@ -116,8 +116,6 @@
     });
 
     btnOff.addEventListener("click", () => {
-      // client.publish(topicAlarm, "OFF");
-      // client.publish(topicStatus, "OFF (Override)");
       if (isAlarmOn) {
         // Publish the override only if the alarm is currently on
         client.publish(topicAlarm, "OFF");
