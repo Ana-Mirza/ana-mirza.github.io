@@ -89,6 +89,8 @@
     const humidityEl = document.getElementById("humidity");
     const btnOff = document.getElementById("btnOff");
 
+    let isAlarmOn = false; // Track the alarm state
+
     client.on("connect", () => {
       statusEl.textContent = "Connected";
       statusEl.style.color = "green";
@@ -101,10 +103,28 @@
       if (topic === topicPressure) pressureEl.textContent = msg;
       if (topic === topicHumidity) humidityEl.textContent = msg;
       if (topic === topicStatus) alarmStateEl.textContent = msg;
+      if (topic === topicStatus) {
+        alarmStateEl.textContent = msg;
+
+        // Update local alarm state based on received status
+        if (msg.startsWith("ON")) {
+          isAlarmOn = true;
+        } else if (msg.startsWith("OFF")) {
+          isAlarmOn = false;
+        }
+      }
     });
 
     btnOff.addEventListener("click", () => {
-      client.publish(topicAlarm, "OFF");
+      // client.publish(topicAlarm, "OFF");
+      // client.publish(topicStatus, "OFF (Override)");
+      if (isAlarmOn) {
+        // Publish the override only if the alarm is currently on
+        client.publish(topicAlarm, "OFF");
+        client.publish(topicStatus, "OFF (Override)");
+      } else {
+        console.log("Alarm is already off, no override needed.");
+      }
     });
 
     client.on("error", (err) => {
